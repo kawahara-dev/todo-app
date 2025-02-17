@@ -130,4 +130,11 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
+.DS_Store
+.gitignore.swp
+next-env.d.ts
+src/.DS_Store
+src/pages/.DS_Store
+
+
 >>>>>>> c1d3bfa (Initial commit from Create Next App)
