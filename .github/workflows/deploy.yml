@@ -32,6 +32,8 @@ jobs:
         run: npm ci
 
       - name: Build static site
+        env:
+          NEXT_PUBLIC_GITHUB_REPOSITORY: ${{ github.event.repository.name }}
         run: npm run build
 
       - name: Upload artifact
