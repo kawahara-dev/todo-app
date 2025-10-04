@@ -435,10 +435,12 @@ export default function Home() {
         justifyContent="space-between"
         alignItems="center"
         sx={{
-          p: { xs: 2, sm: 3 },
-          bgcolor: "#f5f5f5",
+          p: { xs: 2, sm: 2.5 },
+          bgcolor: "background.paper",
           borderRadius: 2,
-          gap: { xs: 2, sm: 3 },
+          border: "1px solid",
+          borderColor: "divider",
+          gap: { xs: 1.5, sm: 2.5 },
           flexDirection: { xs: "column", sm: "row" },
           textAlign: { xs: "center", sm: "left" },
         }}
@@ -461,10 +463,14 @@ export default function Home() {
         sx={{
           mt: { xs: 1, sm: 2 },
           mb: { xs: 2, sm: 3 },
-          p: { xs: 2, sm: 3 },
-          bgcolor: "#fff8e1",
+          p: { xs: 2, sm: 2.5 },
+          bgcolor: "background.paper",
           borderRadius: 2,
-          boxShadow: 1,
+          border: "1px solid",
+          borderColor: "divider",
+          display: "flex",
+          flexDirection: "column",
+          gap: { xs: 1.75, sm: 2 },
         }}
       >
         <Typography variant="h6" gutterBottom>
@@ -474,7 +480,6 @@ export default function Home() {
           label="目標内容"
           fullWidth
           margin="dense"
-          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.description}
           onChange={handleGoalFormChange("description")}
         />
@@ -484,7 +489,6 @@ export default function Home() {
           fullWidth
           margin="dense"
           InputLabelProps={{ shrink: true }}
-          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.deadline}
           onChange={handleGoalFormChange("deadline")}
         />
@@ -494,7 +498,6 @@ export default function Home() {
           fullWidth
           margin="dense"
           inputProps={{ min: 1 }}
-          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.requiredCount}
           onChange={handleGoalFormChange("requiredCount")}
         />
@@ -504,7 +507,6 @@ export default function Home() {
           fullWidth
           margin="dense"
           inputProps={{ min: 0 }}
-          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.penaltyPoints}
           onChange={handleGoalFormChange("penaltyPoints")}
         />
@@ -545,10 +547,14 @@ export default function Home() {
       {goal && goalProgress && (
         <Box
           mb={{ xs: 2.5, sm: 4 }}
-          p={{ xs: 2, sm: 3 }}
-          bgcolor="#e3f2fd"
+          p={{ xs: 2, sm: 2.5 }}
+          bgcolor="background.paper"
           borderRadius={2}
-          boxShadow={1}
+          border="1px solid"
+          borderColor="divider"
+          display="flex"
+          flexDirection="column"
+          gap={1.5}
         >
           <Typography variant="h6" gutterBottom>
             目標の進捗状況
@@ -557,17 +563,17 @@ export default function Home() {
           <Typography variant="body2" color="text.secondary">
             締切: {formatDeadline(goal.deadline)}
           </Typography>
-          <LinearProgress variant="determinate" value={goalProgress.progressPercentage} sx={{ mt: 2 }} />
-          <Typography variant="body2" mt={1}>
+          <LinearProgress variant="determinate" value={goalProgress.progressPercentage} />
+          <Typography variant="body2">
             進捗率: {goalProgress.progressPercentage}% ({goalProgress.completedCount}/{goalProgress.requiredCount})
           </Typography>
           <Typography variant="body2">残り時間: {goalProgress.remainingTimeText}</Typography>
           {goalProgress.isAchieved ? (
-            <Typography variant="body2" color="success.main" mt={1}>
+            <Typography variant="body2" color="success.main">
               目標を成しました！お疲れさま♡
             </Typography>
           ) : goalProgress.isPastDeadline ? (
-            <Typography variant="body2" color="error" mt={1}>
+            <Typography variant="body2" color="error">
               締切を過ぎています。
             </Typography>
           ) : null}
@@ -605,12 +611,13 @@ export default function Home() {
           <ListItem
             key={todo.id}
             sx={{
-              px: { xs: 1, sm: 2 },
-              py: { xs: 1, sm: 1.5 },
+              px: { xs: 1.25, sm: 2 },
+              py: { xs: 1, sm: 1.25 },
               borderRadius: 2,
-              mb: { xs: 1.5, sm: 2 },
+              mb: { xs: 1.25, sm: 1.75 },
               bgcolor: "background.paper",
-              boxShadow: { xs: 1, sm: 0 },
+              border: "1px solid",
+              borderColor: "divider",
             }}
             secondaryAction={
               <IconButton
