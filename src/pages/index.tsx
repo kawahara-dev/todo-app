@@ -420,15 +420,28 @@ export default function Home() {
   };
 
   return (
-    <Container maxWidth="sm">
+    <Container
+      maxWidth="sm"
+      sx={{
+        px: { xs: 2, sm: 0 },
+        py: { xs: 3, sm: 4 },
+        display: "flex",
+        flexDirection: "column",
+        gap: { xs: 3, sm: 4 },
+      }}
+    >
       <Box
         display="flex"
         justifyContent="space-between"
         alignItems="center"
-        mb={2}
-        p={2}
-        bgcolor="#f5f5f5"
-        borderRadius={2}
+        sx={{
+          p: { xs: 2, sm: 3 },
+          bgcolor: "#f5f5f5",
+          borderRadius: 2,
+          gap: { xs: 2, sm: 3 },
+          flexDirection: { xs: "column", sm: "row" },
+          textAlign: { xs: "center", sm: "left" },
+        }}
       >
         <Box>
           <Typography variant="h6">現在のステータス</Typography>
@@ -436,7 +449,7 @@ export default function Home() {
             経験値が100貯まるごとにレベルアップ！
           </Typography>
         </Box>
-        <Box textAlign="right">
+        <Box textAlign={{ xs: "center", sm: "right" }}>
           <Typography variant="subtitle1">レベル: {level}</Typography>
           <Typography variant="subtitle1">経験値: {experience}</Typography>
           <Typography variant="subtitle1">ポイント: {points}</Typography>
@@ -445,12 +458,14 @@ export default function Home() {
       <Box
         component="form"
         onSubmit={handleGoalSubmit}
-        mt={3}
-        mb={4}
-        p={2}
-        bgcolor="#fff8e1"
-        borderRadius={2}
-        boxShadow={1}
+        sx={{
+          mt: { xs: 1, sm: 2 },
+          mb: { xs: 2, sm: 3 },
+          p: { xs: 2, sm: 3 },
+          bgcolor: "#fff8e1",
+          borderRadius: 2,
+          boxShadow: 1,
+        }}
       >
         <Typography variant="h6" gutterBottom>
           目標を設定
@@ -459,6 +474,7 @@ export default function Home() {
           label="目標内容"
           fullWidth
           margin="dense"
+          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.description}
           onChange={handleGoalFormChange("description")}
         />
@@ -468,6 +484,7 @@ export default function Home() {
           fullWidth
           margin="dense"
           InputLabelProps={{ shrink: true }}
+          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.deadline}
           onChange={handleGoalFormChange("deadline")}
         />
@@ -477,6 +494,7 @@ export default function Home() {
           fullWidth
           margin="dense"
           inputProps={{ min: 1 }}
+          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.requiredCount}
           onChange={handleGoalFormChange("requiredCount")}
         />
@@ -486,22 +504,52 @@ export default function Home() {
           fullWidth
           margin="dense"
           inputProps={{ min: 0 }}
+          sx={{ mt: { xs: 1.5, sm: 2 } }}
           value={goalForm.penaltyPoints}
           onChange={handleGoalFormChange("penaltyPoints")}
         />
-        <Box display="flex" justifyContent="flex-end" gap={1} mt={2}>
+        <Box
+          display="flex"
+          justifyContent={{ xs: "stretch", sm: "flex-end" }}
+          gap={1.5}
+          mt={3}
+          flexDirection={{ xs: "column", sm: "row" }}
+          className="mobile-button-spacing"
+        >
           {goal && (
-            <Button variant="outlined" color="secondary" onClick={clearGoal}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={clearGoal}
+              sx={{
+                py: { xs: 1.25, sm: 0.75 },
+                width: { xs: "100%", sm: "auto" },
+              }}
+            >
               リセット
             </Button>
           )}
-          <Button variant="contained" color="primary" type="submit">
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            sx={{
+              py: { xs: 1.25, sm: 0.75 },
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
             目標を設定
           </Button>
         </Box>
       </Box>
       {goal && goalProgress && (
-        <Box mb={4} p={2} bgcolor="#e3f2fd" borderRadius={2} boxShadow={1}>
+        <Box
+          mb={{ xs: 2.5, sm: 4 }}
+          p={{ xs: 2, sm: 3 }}
+          bgcolor="#e3f2fd"
+          borderRadius={2}
+          boxShadow={1}
+        >
           <Typography variant="h6" gutterBottom>
             目標の進捗状況
           </Typography>
@@ -516,7 +564,7 @@ export default function Home() {
           <Typography variant="body2">残り時間: {goalProgress.remainingTimeText}</Typography>
           {goalProgress.isAchieved ? (
             <Typography variant="body2" color="success.main" mt={1}>
-              目標を達成しました！お疲れさま♡
+              目標を成しました！お疲れさま♡
             </Typography>
           ) : goalProgress.isPastDeadline ? (
             <Typography variant="body2" color="error" mt={1}>
@@ -525,27 +573,65 @@ export default function Home() {
           ) : null}
         </Box>
       )}
-      <h1>ToDo App</h1>
+      <Typography
+        variant="h4"
+        component="h1"
+        className="mobile-heading"
+        sx={{ mt: { xs: 2, sm: 3 }, mb: { xs: 2, sm: 3 } }}
+      >
+        ToDo App
+      </Typography>
       <TextField
         label="ToDoを入力"
         fullWidth
         value={input}
+        sx={{ mt: { xs: 1, sm: 1.5 } }}
         onChange={(e) => setInput(e.target.value)}
       />
-      <Button variant="contained" color="primary" onClick={addTodo} style={{ marginTop: "10px" }}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={addTodo}
+        sx={{
+          mt: { xs: 2, sm: 2.5 },
+          py: { xs: 1.25, sm: 0.75 },
+          width: { xs: "100%", sm: "auto" },
+        }}
+      >
         追加
       </Button>
-      <List>
+      <List sx={{ mt: { xs: 3, sm: 4 } }}>
         {todos.map((todo) => (
           <ListItem
             key={todo.id}
+            sx={{
+              px: { xs: 1, sm: 2 },
+              py: { xs: 1, sm: 1.5 },
+              borderRadius: 2,
+              mb: { xs: 1.5, sm: 2 },
+              bgcolor: "background.paper",
+              boxShadow: { xs: 1, sm: 0 },
+            }}
             secondaryAction={
-            <IconButton edge="end" onClick={() => deleteTodo(todo.id)}>
-              <Delete />
-            </IconButton>
+              <IconButton
+                edge="end"
+                onClick={() => deleteTodo(todo.id)}
+                sx={{
+                  width: 48,
+                  height: 48,
+                  ml: { xs: 0.5, sm: 1 },
+                }}
+              >
+                <Delete />
+              </IconButton>
             }
           >
-            <Checkbox edge="start" checked={todo.completed} onChange={() => toggleTodo(todo.id)} />
+            <Checkbox
+              edge="start"
+              checked={todo.completed}
+              onChange={() => toggleTodo(todo.id)}
+              sx={{ mr: { xs: 1.5, sm: 2 } }}
+            />
             <ListItemText
               primary={todo.text}
               primaryTypographyProps={{
