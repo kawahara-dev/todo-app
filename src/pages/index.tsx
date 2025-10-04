@@ -546,9 +546,10 @@ export default function Home() {
         <Box
           mb={{ xs: 2.5, sm: 4 }}
           p={{ xs: 2, sm: 3 }}
-          bgcolor="#e3f2fd"
+          bgcolor="background.paper"
           borderRadius={2}
-          boxShadow={1}
+          border="1px solid"
+          borderColor="divider"
         >
           <Typography variant="h6" gutterBottom>
             目標の進捗状況
@@ -610,7 +611,8 @@ export default function Home() {
               borderRadius: 2,
               mb: { xs: 1.5, sm: 2 },
               bgcolor: "background.paper",
-              boxShadow: { xs: 1, sm: 0 },
+              border: "1px solid",
+              borderColor: "divider",
             }}
             secondaryAction={
               <IconButton
