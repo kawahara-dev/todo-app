@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { ChangeEvent, FormEvent } from "react";
 import {
   Container,
   TextField,
@@ -10,6 +11,9 @@ import {
   Checkbox,
   Box,
   Typography,
+  LinearProgress,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { Delete } from "@mui/icons-material";
 import { nanoid } from "nanoid";
@@ -20,10 +24,90 @@ type Todo = {
   completed: boolean;
 };
 
+type Goal = {
+  id: string;
+  description: string;
+  deadline: string;
+  requiredCount: number;
+  penaltyPoints: number;
+  penaltyApplied: boolean;
+};
+
+type GoalProgress = {
+  progressPercentage: number;
+  remainingTimeText: string;
+  completedCount: number;
+  requiredCount: number;
+  isAchieved: boolean;
+  isPastDeadline: boolean;
+};
+
+type NotificationState = {
+  open: boolean;
+  message: string;
+  severity: "success" | "info" | "warning" | "error";
+};
+
 const EXPERIENCE_PER_TASK = 50;
 const POINTS_PER_TASK = 10;
 
 const calculateLevel = (experience: number) => Math.floor(experience / 100) + 1;
+
+const getRemainingTimeText = (deadline: Date, now: Date) => {
+  const diffMs = deadline.getTime() - now.getTime();
+  if (diffMs <= 0) {
+    return "締切を過ぎています";
+  }
+
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  const parts: string[] = [];
+  if (days > 0) {
+    parts.push(`${days}日`);
+  }
+  if (hours > 0) {
+    parts.push(`${hours}時間`);
+  }
+  if (minutes > 0) {
+    parts.push(`${minutes}分`);
+  }
+
+  return parts.length > 0 ? `残り${parts.join(" ")}` : "1分未満で締切です";
+};
+
+const evaluateGoalStatus = (
+  goal: Goal,
+  completedCount: number,
+  referenceDate: Date,
+): GoalProgress => {
+  const deadlineDate = new Date(goal.deadline);
+  const isDeadlineValid = !Number.isNaN(deadlineDate.getTime());
+  const normalizedCompleted = Math.max(0, completedCount);
+  const requiredCount = Math.max(goal.requiredCount, 0);
+
+  const isAchieved = requiredCount === 0 ? true : normalizedCompleted >= requiredCount;
+  const isPastDeadline = isDeadlineValid ? referenceDate.getTime() >= deadlineDate.getTime() : false;
+
+  const progressRate = requiredCount === 0 ? 1 : Math.min(normalizedCompleted / requiredCount, 1);
+  const progressPercentage = Math.round(progressRate * 100);
+
+  let remainingTimeText = "締切が正しく設定されていません";
+  if (isDeadlineValid) {
+    remainingTimeText = getRemainingTimeText(deadlineDate, referenceDate);
+  }
+
+  return {
+    progressPercentage,
+    remainingTimeText,
+    completedCount: normalizedCompleted,
+    requiredCount,
+    isAchieved,
+    isPastDeadline,
+  };
+};
 
 export default function Home() {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -31,6 +115,19 @@ export default function Home() {
   const [points, setPoints] = useState(0);
   const [experience, setExperience] = useState(0);
   const [level, setLevel] = useState(1);
+  const [goal, setGoal] = useState<Goal | null>(null);
+  const [goalProgress, setGoalProgress] = useState<GoalProgress | null>(null);
+  const [goalForm, setGoalForm] = useState({
+    description: "",
+    deadline: "",
+    requiredCount: "",
+    penaltyPoints: "",
+  });
+  const [notification, setNotification] = useState<NotificationState>({
+    open: false,
+    message: "",
+    severity: "info",
+  });
 
   // 📌 画面読み込み時にローカルストレージからデータを取得
   useEffect(() => {
@@ -89,6 +186,48 @@ export default function Home() {
         }
       }
     }
+
+    const savedGoal = localStorage.getItem("goal");
+    if (savedGoal) {
+      try {
+        const parsedGoal: unknown = JSON.parse(savedGoal);
+        if (typeof parsedGoal === "object" && parsedGoal !== null) {
+          const potentialGoal = parsedGoal as Partial<Goal> & {
+            description?: unknown;
+            deadline?: unknown;
+            requiredCount?: unknown;
+            penaltyPoints?: unknown;
+            penaltyApplied?: unknown;
+          };
+          if (
+            typeof potentialGoal.description === "string" &&
+            typeof potentialGoal.deadline === "string" &&
+            typeof potentialGoal.requiredCount === "number" &&
+            !Number.isNaN(potentialGoal.requiredCount) &&
+            typeof potentialGoal.penaltyPoints === "number" &&
+            !Number.isNaN(potentialGoal.penaltyPoints)
+          ) {
+            const restoredGoal: Goal = {
+              id: potentialGoal.id ?? nanoid(),
+              description: potentialGoal.description,
+              deadline: potentialGoal.deadline,
+              requiredCount: Math.max(0, Math.floor(potentialGoal.requiredCount)),
+              penaltyPoints: Math.max(0, Math.floor(potentialGoal.penaltyPoints)),
+              penaltyApplied: Boolean(potentialGoal.penaltyApplied),
+            };
+            setGoal(restoredGoal);
+            setGoalForm({
+              description: restoredGoal.description,
+              deadline: restoredGoal.deadline,
+              requiredCount: restoredGoal.requiredCount ? restoredGoal.requiredCount.toString() : "",
+              penaltyPoints: restoredGoal.penaltyPoints ? restoredGoal.penaltyPoints.toString() : "",
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to parse goal from localStorage", error);
+      }
+    }
   }, []);
 
   useEffect(() => {
@@ -106,6 +245,14 @@ export default function Home() {
   useEffect(() => {
     localStorage.setItem("level", level.toString());
   }, [level]);
+
+  useEffect(() => {
+    if (goal) {
+      localStorage.setItem("goal", JSON.stringify(goal));
+    } else {
+      localStorage.removeItem("goal");
+    }
+  }, [goal]);
 
   // 📌 ToDoを追加する
   const addTodo = () => {
@@ -150,6 +297,128 @@ export default function Home() {
     });
   };
 
+  const completedCount = todos.filter((todo) => todo.completed).length;
+
+  useEffect(() => {
+    if (!goal) {
+      setGoalProgress(null);
+      return;
+    }
+
+    const updateGoalStatus = () => {
+      const status = evaluateGoalStatus(goal, completedCount, new Date());
+      setGoalProgress(status);
+
+      if (status.isPastDeadline && !status.isAchieved && !goal.penaltyApplied && goal.penaltyPoints > 0) {
+        setPoints((prevPoints) => Math.max(0, prevPoints - goal.penaltyPoints));
+        setGoal((prevGoal) => {
+          if (!prevGoal) return prevGoal;
+          return { ...prevGoal, penaltyApplied: true };
+        });
+        setNotification({
+          open: true,
+          message: `目標「${goal.description}」を達成できなかったため、${goal.penaltyPoints}ポイント減算しました。`,
+          severity: "warning",
+        });
+      }
+    };
+
+    updateGoalStatus();
+    const intervalId = setInterval(updateGoalStatus, 60000);
+    return () => clearInterval(intervalId);
+  }, [goal, completedCount]);
+
+  const handleGoalFormChange = (field: keyof typeof goalForm) => (event: ChangeEvent<HTMLInputElement>) => {
+    setGoalForm((prev) => ({ ...prev, [field]: event.target.value }));
+  };
+
+  const handleGoalSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const trimmedDescription = goalForm.description.trim();
+    const requiredCount = Number(goalForm.requiredCount);
+    const penaltyPoints = Number(goalForm.penaltyPoints || "0");
+
+    if (!trimmedDescription || !goalForm.deadline) {
+      setNotification({
+        open: true,
+        message: "目標内容と締切日時を入力してください。",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (Number.isNaN(requiredCount) || requiredCount <= 0) {
+      setNotification({
+        open: true,
+        message: "必要完了数は1以上の数値で入力してください。",
+        severity: "error",
+      });
+      return;
+    }
+
+    if (Number.isNaN(penaltyPoints) || penaltyPoints < 0) {
+      setNotification({
+        open: true,
+        message: "ポイント減算は0以上の数値で入力してください。",
+        severity: "error",
+      });
+      return;
+    }
+
+    const newGoal: Goal = {
+      id: nanoid(),
+      description: trimmedDescription,
+      deadline: goalForm.deadline,
+      requiredCount: Math.floor(requiredCount),
+      penaltyPoints: Math.floor(penaltyPoints),
+      penaltyApplied: false,
+    };
+
+    setGoal(newGoal);
+    setGoalForm({
+      description: newGoal.description,
+      deadline: newGoal.deadline,
+      requiredCount: newGoal.requiredCount.toString(),
+      penaltyPoints: newGoal.penaltyPoints.toString(),
+    });
+    setNotification({
+      open: true,
+      message: "新しい目標を設定しました！",
+      severity: "success",
+    });
+  };
+
+  const clearGoal = () => {
+    setGoal(null);
+    setGoalProgress(null);
+    setGoalForm({
+      description: "",
+      deadline: "",
+      requiredCount: "",
+      penaltyPoints: "",
+    });
+    setNotification({
+      open: true,
+      message: "目標をリセットしました。",
+      severity: "info",
+    });
+  };
+
+  const handleNotificationClose = (_event?: unknown, reason?: string) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setNotification((prev) => ({ ...prev, open: false }));
+  };
+
+  const formatDeadline = (deadline: string) => {
+    const deadlineDate = new Date(deadline);
+    if (Number.isNaN(deadlineDate.getTime())) {
+      return "締切未設定";
+    }
+    return deadlineDate.toLocaleString();
+  };
+
   return (
     <Container maxWidth="sm">
       <Box
@@ -173,6 +442,89 @@ export default function Home() {
           <Typography variant="subtitle1">ポイント: {points}</Typography>
         </Box>
       </Box>
+      <Box
+        component="form"
+        onSubmit={handleGoalSubmit}
+        mt={3}
+        mb={4}
+        p={2}
+        bgcolor="#fff8e1"
+        borderRadius={2}
+        boxShadow={1}
+      >
+        <Typography variant="h6" gutterBottom>
+          目標を設定
+        </Typography>
+        <TextField
+          label="目標内容"
+          fullWidth
+          margin="dense"
+          value={goalForm.description}
+          onChange={handleGoalFormChange("description")}
+        />
+        <TextField
+          label="締切日時"
+          type="datetime-local"
+          fullWidth
+          margin="dense"
+          InputLabelProps={{ shrink: true }}
+          value={goalForm.deadline}
+          onChange={handleGoalFormChange("deadline")}
+        />
+        <TextField
+          label="必要完了数"
+          type="number"
+          fullWidth
+          margin="dense"
+          inputProps={{ min: 1 }}
+          value={goalForm.requiredCount}
+          onChange={handleGoalFormChange("requiredCount")}
+        />
+        <TextField
+          label="未達時のポイント減算"
+          type="number"
+          fullWidth
+          margin="dense"
+          inputProps={{ min: 0 }}
+          value={goalForm.penaltyPoints}
+          onChange={handleGoalFormChange("penaltyPoints")}
+        />
+        <Box display="flex" justifyContent="flex-end" gap={1} mt={2}>
+          {goal && (
+            <Button variant="outlined" color="secondary" onClick={clearGoal}>
+              リセット
+            </Button>
+          )}
+          <Button variant="contained" color="primary" type="submit">
+            目標を設定
+          </Button>
+        </Box>
+      </Box>
+      {goal && goalProgress && (
+        <Box mb={4} p={2} bgcolor="#e3f2fd" borderRadius={2} boxShadow={1}>
+          <Typography variant="h6" gutterBottom>
+            目標の進捗状況
+          </Typography>
+          <Typography variant="subtitle1">{goal.description}</Typography>
+          <Typography variant="body2" color="text.secondary">
+            締切: {formatDeadline(goal.deadline)}
+          </Typography>
+          <LinearProgress variant="determinate" value={goalProgress.progressPercentage} sx={{ mt: 2 }} />
+          <Typography variant="body2" mt={1}>
+            進捗率: {goalProgress.progressPercentage}% ({goalProgress.completedCount}/{goalProgress.requiredCount})
+          </Typography>
+          <Typography variant="body2">残り時間: {goalProgress.remainingTimeText}</Typography>
+          {goalProgress.isAchieved ? (
+            <Typography variant="body2" color="success.main" mt={1}>
+              目標を達成しました！お疲れさま♡
+            </Typography>
+          ) : goalProgress.isPastDeadline ? (
+            <Typography variant="body2" color="error" mt={1}>
+              締切を過ぎています。
+            </Typography>
+          ) : null}
+        </Box>
+      )}
       <h1>ToDo App</h1>
       <TextField
         label="ToDoを入力"
@@ -203,6 +555,16 @@ export default function Home() {
           </ListItem>
         ))}
       </List>
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={6000}
+        onClose={handleNotificationClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert onClose={handleNotificationClose} severity={notification.severity} sx={{ width: "100%" }}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
