@@ -1,11 +1,14 @@
 import type { NextConfig } from "next";
 
-const repo = process.env.NEXT_PUBLIC_GITHUB_REPOSITORY ?? "";
+const repo =
+  process.env.NEXT_PUBLIC_GITHUB_REPOSITORY ??
+  process.env.GITHUB_REPOSITORY?.split("/").pop() ??
+  "";
+
 const isProd = process.env.NODE_ENV === "production";
 const basePath = isProd && repo ? `/${repo}` : "";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   reactStrictMode: true,
   output: "export",
   basePath,

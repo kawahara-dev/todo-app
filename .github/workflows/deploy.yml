@@ -31,9 +31,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup GitHub Pages
+        uses: actions/configure-pages@v4
+
       - name: Build static site
         env:
           NEXT_PUBLIC_GITHUB_REPOSITORY: ${{ github.event.repository.name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: npm run build
 
       - name: Upload artifact
